@@ -1,0 +1,14 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+
+# 运行时产物(可随时由 ffmpeg 重新生成)
+data/uploads/
+data/previews/
+data/frames/
+data/banners.json.tmp
+
+# 依赖与日志
+node_modules/
+*.log

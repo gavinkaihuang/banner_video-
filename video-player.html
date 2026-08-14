@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1b1b22" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>视频播放 · Vidora</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/player.css" />
+</head>
+<body>
+  <div class="player-page">
+    <!-- 顶部浮动栏:返回 + 标题 -->
+    <header class="player-header">
+      <a class="player-back" href="index.html" aria-label="返回首页">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </a>
+      <div class="player-titles">
+        <span class="player-tag" id="player-tag">视频</span>
+        <h1 class="player-title" id="player-title">播放中</h1>
+      </div>
+    </header>
+
+    <!-- 视频播放区 -->
+    <main class="player-stage">
+      <video
+        id="player-video"
+        class="player-video"
+        controls
+        muted
+        autoplay
+        playsinline
+        preload="auto"
+      ></video>
+      <div class="player-loader" id="player-loader">
+        <span class="loader-spinner"></span>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/player.js"></script>
+</body>
+</html>

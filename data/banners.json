@@ -1,0 +1,136 @@
+{
+  "banners": [
+    {
+      "id": "c2ab6ef4-a06a-4997-b1e3-1a37e4488e95",
+      "title": "Sintel 短片",
+      "tag": "短片",
+      "link": "",
+      "video": "/assets/videos/c2ab6ef4-a06a-4997-b1e3-1a37e4488e95.mp4",
+      "poster": "/assets/posters/c2ab6ef4-a06a-4997-b1e3-1a37e4488e95.jpg?v=1786695441026",
+      "duration": 3,
+      "width": 640,
+      "height": 360,
+      "order": 3,
+      "enabled": true,
+      "status": "ready",
+      "posterStatus": "ready",
+      "error": null,
+      "originalName": "video-test.mp4",
+      "createdAt": "2026-08-14T08:16:50.421Z",
+      "_framesDir": "/Users/gminihome/SourceCodes/banner_video/data/frames/c2ab6ef4-a06a-4997-b1e3-1a37e4488e95",
+      "frames": [
+        {
+          "file": "candidate-0.jpg",
+          "time": 0.61
+        },
+        {
+          "file": "candidate-1.jpg",
+          "time": 1.52
+        },
+        {
+          "file": "candidate-2.jpg",
+          "time": 2.43
+        }
+      ]
+    },
+    {
+      "id": "83d04d22-b5c6-4e17-8d7d-822d5daf23ed",
+      "title": "1-English_with_captions",
+      "tag": "平安租赁",
+      "link": "",
+      "video": "/assets/videos/83d04d22-b5c6-4e17-8d7d-822d5daf23ed.mp4",
+      "poster": "/assets/posters/83d04d22-b5c6-4e17-8d7d-822d5daf23ed.jpg?v=1786696959875",
+      "duration": 50,
+      "width": 888,
+      "height": 506,
+      "order": 1,
+      "enabled": false,
+      "status": "ready",
+      "posterStatus": "ready",
+      "error": null,
+      "originalName": "1-English_with_captions.mp4",
+      "createdAt": "2026-08-14T08:34:23.293Z",
+      "_framesDir": "/Users/gminihome/SourceCodes/banner_video/data/frames/83d04d22-b5c6-4e17-8d7d-822d5daf23ed",
+      "frames": [
+        {
+          "file": "candidate-0.jpg",
+          "time": 9.91
+        },
+        {
+          "file": "candidate-1.jpg",
+          "time": 24.77
+        },
+        {
+          "file": "candidate-2.jpg",
+          "time": 39.63
+        }
+      ]
+    },
+    {
+      "id": "ece4d676-6ba8-42fd-80c3-513de10e0835",
+      "title": "3-English_with_captions",
+      "tag": "小米汽车",
+      "link": "",
+      "video": "/assets/videos/ece4d676-6ba8-42fd-80c3-513de10e0835.mp4",
+      "poster": "/assets/posters/ece4d676-6ba8-42fd-80c3-513de10e0835.jpg?v=1786696966308",
+      "duration": 63,
+      "width": 720,
+      "height": 1280,
+      "order": 4,
+      "enabled": true,
+      "status": "ready",
+      "posterStatus": "ready",
+      "error": null,
+      "originalName": "3-English_with_captions.mp4",
+      "createdAt": "2026-08-14T08:34:56.441Z",
+      "_framesDir": "/Users/gminihome/SourceCodes/banner_video/data/frames/ece4d676-6ba8-42fd-80c3-513de10e0835",
+      "frames": [
+        {
+          "file": "candidate-0.jpg",
+          "time": 12.54
+        },
+        {
+          "file": "candidate-1.jpg",
+          "time": 31.36
+        },
+        {
+          "file": "candidate-2.jpg",
+          "time": 50.18
+        }
+      ]
+    },
+    {
+      "id": "673f055f-672f-40e8-af49-ea48a73aa102",
+      "title": "katyusha_1786700277282",
+      "tag": "IBOS视频",
+      "link": "",
+      "video": "/assets/videos/673f055f-672f-40e8-af49-ea48a73aa102.mp4",
+      "poster": "/assets/posters/673f055f-672f-40e8-af49-ea48a73aa102.jpg?v=1786700764781",
+      "duration": 50,
+      "width": 896,
+      "height": 512,
+      "order": 2,
+      "enabled": true,
+      "status": "ready",
+      "posterStatus": "ready",
+      "error": null,
+      "originalName": "katyusha_1786700277282.mp4",
+      "createdAt": "2026-08-14T09:45:41.969Z",
+      "_framesDir": "/Users/gminihome/SourceCodes/banner_video/data/frames/673f055f-672f-40e8-af49-ea48a73aa102",
+      "frames": [
+        {
+          "file": "candidate-0.jpg",
+          "time": 9.96
+        },
+        {
+          "file": "candidate-1.jpg",
+          "time": 24.9
+        },
+        {
+          "file": "candidate-2.jpg",
+          "time": 39.84
+        }
+      ]
+    }
+  ]
+}

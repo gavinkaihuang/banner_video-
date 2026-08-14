@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1b1b22" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Banner 视频轮播 · 移动端 H5 Demo</title>
+
+  <!-- 字体:Space Grotesk 仅用于拉丁标题/品牌,中文回退系统字体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Swiper 11 CSS(jsdelivr CDN) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+  <!-- 本地样式 -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- 示例导航 -->
+    <header class="app-header">
+      <a class="brand" href="#">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Vidora</span>
+      </a>
+      <nav class="app-nav" aria-label="主导航">
+        <a class="app-nav__item is-active" href="#">首页</a>
+        <a class="app-nav__item" href="#">推荐</a>
+        <a class="app-nav__item" href="#">分类</a>
+      </nav>
+    </header>
+
+    <main class="app-main">
+      <!-- Banner 视频轮播位 -->
+      <section class="banner" aria-label="Banner 视频轮播">
+        <div class="swiper banner-swiper">
+          <div class="swiper-wrapper" id="banner-wrapper">
+            <!-- slide 由 js/main.js 动态生成,这里只留空 wrapper 与分页器 -->
+          </div>
+          <div class="swiper-pagination banner-pagination"></div>
+        </div>
+        <!-- 自动播放暂停/继续按钮(无障碍:WCAG 2.2.2 要求可暂停的移动内容) -->
+        <button
+          type="button"
+          class="banner-toggle"
+          id="banner-toggle"
+          aria-label="暂停轮播"
+          aria-pressed="false"
+        >
+          <svg class="banner-toggle__icon banner-toggle__pause" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
+            <path d="M7 5v14M17 5v14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+          </svg>
+          <svg class="banner-toggle__icon banner-toggle__play" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
+            <path d="M8 5v14l11-7z" fill="currentColor" />
+          </svg>
+        </button>
+      </section>
+
+      <!-- 正文占位区域 -->
+      <section class="content" aria-labelledby="content-heading">
+        <div class="content-head">
+          <h2 class="content-title" id="content-heading">为你推荐</h2>
+          <span class="content-sub">精选短片 · 顶部 Banner 可左右滑动切换</span>
+        </div>
+
+        <ul class="card-list" id="card-list">
+            <!-- 推荐卡片由 js/main.js 动态生成 -->
+          </ul>
+      </section>
+
+      <footer class="app-foot">
+        <span>Banner 视频轮播 Demo · 原生 HTML/CSS/JS + Swiper 11</span>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Swiper 11 JS(jsdelivr CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <!-- 本地逻辑:配置 + 轮播控制 -->
+  <script src="js/main.js"></script>
+</body>
+</html>

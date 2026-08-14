@@ -1,0 +1,346 @@
+/* ==========================================================================
+   Banner 视频轮播 Demo · style.css
+   设计方向:克制的暖白底 + 深墨顶栏 + 暖橙强调,营造移动内容应用质感
+   关键兼容:video { pointer-events: none } —— 避免 iOS 视频拦截滑动手势
+   ========================================================================== */
+
+/* ---------- 设计令牌 ---------- */
+:root {
+  /* 色彩 */
+  --c-bg:          oklch(97.6% 0.005 75);   /* 暖白底 */
+  --c-surface:     oklch(99.5% 0.002 75);   /* 卡片底 */
+  --c-ink:         oklch(24% 0.012 285);    /* 主文字 */
+  --c-ink-soft:    oklch(52% 0.012 285);    /* 次文字 */
+  --c-line:        oklch(91% 0.006 285);     /* 分割线 */
+  --c-header:      oklch(22% 0.012 290);    /* 顶栏深墨 */
+  --c-header-ink:  oklch(97% 0.005 75);
+  --c-accent:      oklch(70% 0.185 45);     /* 暖橙 */
+  --c-accent-deep: oklch(56% 0.21 40);
+  --c-video-bg:    oklch(20% 0.012 290);    /* 视频深色占位(无 poster 时避免黑屏) */
+
+  /* 尺寸:banner 高度限定在 180-220px 之间,随视口自适应 */
+  --banner-height: clamp(180px, 48vw, 220px);
+  --banner-radius: 16px;
+  --app-max: 480px;
+
+  /* 字体 */
+  --font-display: "Space Grotesk", "PingFang SC", "Hiragino Sans GB", system-ui, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", system-ui, sans-serif;
+
+  /* 动效 */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur: 280ms;
+}
+
+/* ---------- 基础重置 ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--c-ink);
+  background: oklch(94% 0.006 285); /* app 外灰底,衬托手机框 */
+  -webkit-font-smoothing: antialiased;
+}
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+ul { margin: 0; padding: 0; list-style: none; }
+
+/* ---------- 应用容器(手机宽度居中) ---------- */
+.app {
+  position: relative;
+  max-width: var(--app-max);
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--c-bg);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 18px 50px -20px rgba(20, 20, 30, 0.25);
+  overflow: hidden;
+}
+@media (max-width: 480px) {
+  body { background: var(--c-bg); }
+  .app { box-shadow: none; }
+}
+
+/* ---------- 顶部导航 ---------- */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  padding-top: max(14px, env(safe-area-inset-top));
+  background: var(--c-header);
+  color: var(--c-header-ink);
+}
+.brand { display: inline-flex; align-items: center; gap: 8px; }
+.brand-mark {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, var(--c-accent), var(--c-accent-deep));
+  box-shadow: 0 2px 8px -2px var(--c-accent-deep);
+}
+.brand-mark::after { /* 播放三角 */
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 5px;
+  border-style: solid;
+  border-width: 4px 0 4px 6px;
+  border-color: transparent transparent transparent #fff;
+}
+.brand-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.02em;
+}
+.app-nav { display: flex; gap: 18px; }
+.app-nav__item {
+  position: relative;
+  padding: 4px 0;
+  font-size: 14px;
+  color: oklch(78% 0.005 75);
+  transition: color var(--dur) var(--ease-out);
+}
+.app-nav__item.is-active { color: #fff; font-weight: 600; }
+.app-nav__item.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--c-accent);
+}
+.app-nav__item:active { color: var(--c-accent); }
+
+/* ---------- Banner 轮播 ---------- */
+.banner {
+  margin: 16px 8px 0;        /* 左右 8px 边距(移动端常见) */
+  height: var(--banner-height);
+  border-radius: var(--banner-radius);
+  overflow: hidden;
+  background: var(--c-video-bg);
+}
+.banner-swiper { width: 100%; height: 100%; }
+.banner-swiper .swiper-wrapper { height: 100%; }
+.banner-slide {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--c-video-bg);
+}
+
+/* 视频占满 slide、object-fit:cover;
+   pointer-events:none 避免 iOS 视频拦截触摸手势导致轮播滑不动 */
+.banner-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--c-video-bg); /* 无 poster 时的深色占位,避免黑屏 */
+  pointer-events: none;
+}
+
+/* 首帧封面:首次播放时盖住视频,等 'playing' 事件(真实出帧)后淡出,
+   避免 iOS 上 play() 移除原生 poster 但解码未出帧时的黑屏闪动 */
+.banner-poster-cover {
+  position: absolute;
+  inset: 0;
+  z-index: 1;              /* 在 video 之上、scrim/caption(z-index:2)之下 */
+  background: var(--c-video-bg) center / cover no-repeat;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity var(--duration-normal, 300ms) ease;
+}
+.banner-poster-cover.is-hidden {
+  opacity: 0;
+}
+
+/* 渐变遮罩,提升标题可读性 */
+.banner-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.12) 38%,
+    rgba(0, 0, 0, 0) 60%
+  );
+}
+
+/* 标题文案 */
+.banner-caption {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none; /* 不挡滑动手势 */
+}
+.banner-tag {
+  align-self: flex-start;
+  padding: 4px 7px;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: var(--c-accent);
+  border-radius: 999px;
+}
+.banner-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* 可点击的 slide:鼠标提示 */
+.banner-slide.is-clickable { cursor: pointer; }
+/* 键盘可达性:聚焦时给出清晰描边(默认轮廓保留,不额外去除) */
+
+/* 自动播放暂停/继续按钮:位于右下角、分页器上方 */
+.banner-toggle {
+  position: absolute;
+  right: 10px;
+  bottom: 32px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: background var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+}
+.banner-toggle:active {
+  transform: scale(0.92);
+  background: rgba(0, 0, 0, 0.5);
+}
+.banner-toggle:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}
+.banner-toggle__pause,
+.banner-toggle__play {
+  position: absolute;
+  transition: opacity var(--dur) var(--ease-out);
+}
+.banner-toggle__play { opacity: 0; }
+/* 暂停状态:显示播放图标,隐藏暂停图标 */
+.banner-toggle.is-paused .banner-toggle__pause { opacity: 0; }
+.banner-toggle.is-paused .banner-toggle__play { opacity: 1; }
+
+/* 分页器(自定义圆点) */
+.banner-pagination {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  left: auto;
+  width: auto;
+  z-index: 3;
+  display: flex;
+  gap: 5px;
+}
+.banner-pagination .swiper-pagination-bullet {
+  width: 6px;
+  height: 6px;
+  margin: 0;
+  background: rgba(255, 255, 255, 0.55);
+  opacity: 1;
+  border-radius: 999px;
+  transition: width var(--dur) var(--ease-out), background var(--dur) var(--ease-out);
+}
+.banner-pagination .swiper-pagination-bullet-active {
+  width: 18px;
+  background: var(--c-accent);
+}
+
+/* ---------- 正文区域 ---------- */
+.content { padding: 22px 16px 8px; }
+.content-head { margin-bottom: 14px; }
+.content-title {
+  margin: 0 0 2px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+}
+.content-sub { font-size: 12.5px; color: var(--c-ink-soft); }
+
+.card-list { display: flex; flex-direction: column; gap: 14px; }
+.card {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: 14px;
+  transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+}
+.card:active {
+  transform: scale(0.985);
+  box-shadow: 0 6px 20px -12px rgba(20, 20, 30, 0.25);
+}
+.card-media {
+  position: relative;
+  flex: 0 0 128px;
+  width: 128px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--c-video-bg);
+}
+.card-media img { width: 100%; height: 100%; object-fit: cover; }
+.card-duration {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 6px;
+}
+.card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.card-title { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+.card-desc { margin: 0; font-size: 12.5px; color: var(--c-ink-soft); }
+
+/* ---------- 底部 ---------- */
+.app-foot {
+  padding: 18px 16px calc(20px + env(safe-area-inset-bottom));
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--c-ink-soft);
+}
+
+/* ---------- 无障碍:尊重 reduced-motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
