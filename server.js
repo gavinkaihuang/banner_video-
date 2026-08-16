@@ -34,10 +34,13 @@ const JSON_BODY_LIMIT = 1 * 1024 * 1024;    // 1MB
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.webm', '.m4v', '.mkv', '.avi']);
 
 // Banner 转码参数(与项目 video-optimization-recipe 一致:静音横幅、快速起播)
-const TRANSCODE_ARGS = [
+// 画布尺寸随视频方向:横屏 640×360,竖屏 360×640(黑边仅补齐,不裁切不拉伸)
+function bannerFilter(w, h) {
+  return 'scale=' + w + ':' + h + ':force_original_aspect_ratio=decrease,' +
+         'pad=' + w + ':' + h + ':(ow-iw)/2:(oh-ih)/2:color=black';
+}
+const TRANSCODE_ARGS_COMMON = [
   '-c:v', 'libx264', '-profile:v', 'high', '-pix_fmt', 'yuv420p',
-  '-vf', 'scale=640:360:force_original_aspect_ratio=decrease,' +
-         'pad=640:360:(ow-iw)/2:(oh-ih)/2:color=black',
   '-crf', '26', '-preset', 'veryfast', '-an', '-movflags', '+faststart', '-r', '24'
 ];
 
@@ -251,10 +254,12 @@ async function extractPoster(src, timeSec, dest) {
   ]);
 }
 
-/** 转码为 Banner 正式规格(640x360 / 无音轨 / faststart) */
-async function transcodeBanner(src, dest) {
+/** 转码为 Banner 正式规格(无音轨 / faststart;画布尺寸按视频方向自动选择) */
+async function transcodeBanner(src, dest, orientation) {
   mkdirp(path.dirname(dest));
-  await run('ffmpeg', ['-y', '-i', src].concat(TRANSCODE_ARGS, [dest]));
+  const [w, h] = orientation === 'portrait' ? [360, 640] : [640, 360];
+  await run('ffmpeg', ['-y', '-i', src]
+    .concat(bannerFilter(w, h), TRANSCODE_ARGS_COMMON, [dest]));
 }
 
 /* ----------------------------------------------------------------------
@@ -327,14 +332,18 @@ function route(method, pattern, handler) {
   routes.push({ method, rx, keys, handler });
 }
 
-/* ---- 列表(公共:前台轮播也读这个) ---- */
-route('GET', '/api/banners', (req, res) => {
+/* ---- 列表(公共:前台轮播也读这个;?orientation=landscape|portrait 过滤) ---- */
+route('GET', '/api/banners', (req, res, params, query) => {
   const data = loadData();
-  const list = data.banners
+  let list = data.banners
     .slice()
-    .sort((a, b) => (a.order || 0) - (b.order || 0))
-    .map(publicBanner);
-  sendJson(res, 200, { banners: list });
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+  if (query.orientation === 'landscape' || query.orientation === 'portrait') {
+    list = list.filter((b) => effectiveOrientation(b) === query.orientation);
+  }
+  sendJson(res, 200, {
+    banners: list.map((b) => ({ ...publicBanner(b), effOrientation: effectiveOrientation(b) }))
+  });
 });
 
 /* ---- 详情 ---- */
@@ -400,6 +409,7 @@ function createBannerRecord(fields, originalName, framesDir, forcedId) {
     duration: 0,
     width: 0,
     height: 0,
+    orientation: 'auto',   // auto=按分辨率判定;可被 PUT 改为 landscape/portrait
     order: maxOrder + 1,
     enabled: true,
     status: 'processing',
@@ -513,6 +523,18 @@ function downloadToFile(url, dest, maxBytes) {
   });
 }
 
+/** 计算生效方向:手动指定(landscape/portrait)优先,否则按分辨率判定;
+    分辨率未知(处理中/探测失败)返回 'unknown',前端不应把它归入任何一组 */
+function effectiveOrientation(banner) {
+  if (banner.orientation === 'landscape' || banner.orientation === 'portrait') {
+    return banner.orientation;
+  }
+  if (banner.width && banner.height) {
+    return banner.width >= banner.height ? 'landscape' : 'portrait';
+  }
+  return 'unknown';
+}
+
 /** 标记 banner 处理失败并落盘 */
 function failBanner(id, msg) {
   const d = loadData();
@@ -540,6 +562,15 @@ async function processBanner(id, srcFile, remoteUrl) {
     const meta = await probeVideo(srcFile);
     if (!meta || !meta.duration) return fail('无法读取视频(ffprobe 失败)');
 
+    // 探测完成立即写入宽高:后台 Tab 马上就能按方向归组,不用等转码结束
+    const dEarly = loadData();
+    const bEarly = findBanner(dEarly, id);
+    if (bEarly) {
+      bEarly.width = meta.width;
+      bEarly.height = meta.height;
+      saveData(dEarly);
+    }
+
     const frames = await extractCandidateFrames(
       srcFile, meta.duration, path.join(FRAMES_DIR, id));
 
@@ -550,9 +581,11 @@ async function processBanner(id, srcFile, remoteUrl) {
     if (remoteUrl) {
       b.video = remoteUrl;
     } else {
+      // 画布按视频方向:竖屏 360×640,横屏 640×360
+      const orient = meta.width >= meta.height ? 'landscape' : 'portrait';
       const videoName = id + '.mp4';
       const videoAbs = path.join(VIDEO_DIR, videoName);
-      await transcodeBanner(srcFile, videoAbs);
+      await transcodeBanner(srcFile, videoAbs, orient);
       b.video = '/assets/videos/' + videoName;
     }
 
@@ -652,6 +685,9 @@ route('PUT', '/api/banners/:id', async (req, res, params) => {
   if (body.tag !== undefined) b.tag = String(body.tag).slice(0, 20);
   if (body.link !== undefined) b.link = String(body.link).slice(0, 300);
   if (body.enabled !== undefined) b.enabled = Boolean(body.enabled);
+  if (['landscape', 'portrait', 'auto'].includes(body.orientation)) {
+    b.orientation = body.orientation;  // 手动归类;auto 回到按分辨率判定
+  }
 
   saveData(data);
   sendJson(res, 200, { banner: publicBanner(b) });
@@ -797,8 +833,9 @@ const server = http.createServer(async (req, res) => {
     const m = r.rx.exec(pathname);
     const params = {};
     r.keys.forEach((k, i) => { params[k] = m[i + 1]; });
+    const query = Object.fromEntries(u.searchParams.entries()); // 转普通对象,handler 里可点号访问
     try {
-      await r.handler(req, res, params);
+      await r.handler(req, res, params, query);
     } catch (e) {
       sendError(res, 500, '服务器错误:' + e.message);
     }

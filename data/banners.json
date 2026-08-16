@@ -31,7 +31,8 @@
           "file": "candidate-2.jpg",
           "time": 2.43
         }
-      ]
+      ],
+      "orientation": "auto"
     },
     {
       "id": "83d04d22-b5c6-4e17-8d7d-822d5daf23ed",
@@ -64,7 +65,8 @@
           "file": "candidate-2.jpg",
           "time": 39.63
         }
-      ]
+      ],
+      "orientation": "auto"
     },
     {
       "id": "ece4d676-6ba8-42fd-80c3-513de10e0835",
@@ -97,7 +99,8 @@
           "file": "candidate-2.jpg",
           "time": 50.18
         }
-      ]
+      ],
+      "orientation": "portrait"
     },
     {
       "id": "673f055f-672f-40e8-af49-ea48a73aa102",
@@ -130,7 +133,8 @@
           "file": "candidate-2.jpg",
           "time": 39.84
         }
-      ]
+      ],
+      "orientation": "auto"
     }
   ]
 }

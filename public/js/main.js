@@ -18,7 +18,9 @@
   };
 
   var bannerSwiper = null;
-  var BANNER_VIDEOS = [];
+  var stripSwiper = null;
+  var BANNER_VIDEOS = [];  // 横屏组:顶部宽幅轮播
+  var STRIP_VIDEOS = [];   // 竖屏组:原生宽高比横滑区(无竖屏时回退横屏组)
 
   /* ---------------- 渲染 ---------------- */
 
@@ -96,7 +98,8 @@
     if (!list) return;
     var fragment = document.createDocumentFragment();
 
-    BANNER_VIDEOS.forEach(function (item) {
+    // 推荐列表展示全部(横屏 + 竖屏)
+    BANNER_VIDEOS.concat(STRIP_VIDEOS).forEach(function (item) {
       var card = document.createElement('li');
       card.className = 'card';
 
@@ -144,6 +147,130 @@
     });
 
     list.appendChild(fragment);
+  }
+
+  /* ---------------- 原生宽高比横滑区 ---------------- */
+
+  /**
+   * 计算 banner 的宽高比:优先用后台返回的 width/height,
+   * 缺失时按横屏 16:9 兜底。竖屏视频得到 < 1 的比例 → slide 更窄
+   */
+  function videoRatio(item) {
+    if (item.width && item.height && item.height > 0) {
+      return item.width / item.height;
+    }
+    return 16 / 9;
+  }
+
+  function ratioLabel(ratio) {
+    if (ratio >= 0.99) return '16:9 横屏';   // 横屏按 16:9 归类(即使实际是 888:506)
+    if (ratio <= 0.57) return '9:16 竖屏';   // 约 9:16(0.5625)
+    return '方形';
+  }
+
+  function renderStrip() {
+    var wrapper = document.getElementById('strip-wrapper');
+    if (!wrapper) return;
+
+    var fragment = document.createDocumentFragment();
+    STRIP_VIDEOS.forEach(function (item, index) {
+      var ratio = videoRatio(item);
+      var slide = document.createElement('div');
+      slide.className = 'swiper-slide strip-slide';
+      slide.dataset.index = String(index);
+      // CSS 里用 --strip-ratio 计算 slide 宽度(banner 高度 × 比例)
+      slide.style.setProperty('--strip-ratio', ratio);
+
+      var video = document.createElement('video');
+      video.className = 'strip-video';
+      video.src = item.video;
+      video.muted = true;
+      video.playsInline = true;
+      video.setAttribute('webkit-playsinline', 'true');
+      video.loop = true;
+      video.preload = 'metadata';
+      if (item.poster) video.poster = item.poster;
+      slide.appendChild(video);
+
+      // 底部文案:标题 + 宽高比角标(展示该视频的适配形态)
+      var caption = document.createElement('div');
+      caption.className = 'strip-caption';
+      var titleEl = document.createElement('span');
+      titleEl.className = 'strip-title';
+      titleEl.textContent = item.title || '未命名';
+      var badge = document.createElement('span');
+      badge.className = 'strip-ratio-badge';
+      badge.textContent = ratioLabel(ratio);
+      caption.appendChild(titleEl);
+      caption.appendChild(badge);
+      slide.appendChild(caption);
+
+      slide.tabIndex = 0;
+      slide.setAttribute('role', 'link');
+      slide.addEventListener('click', function () { onStripClick(item); });
+      slide.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onStripClick(item);
+        }
+      });
+
+      fragment.appendChild(slide);
+    });
+
+    wrapper.appendChild(fragment);
+
+    // 全横屏(且比例接近)时不必横滑,单 slide 撑满即可;混合比例仍需滚动
+    stripSwiper = new Swiper('.strip-swiper', {
+      slidesPerView: 'auto',
+      spaceBetween: 10,
+      centeredSlides: true,
+      loop: STRIP_VIDEOS.length > 2,
+      grabCursor: true,
+      autoplay: false
+    });
+
+    // 当前居中的 slide 播放,其余暂停;滑走即暂停
+    stripSwiper.on('slideChange', function () {
+      syncStripPlayback();
+    });
+    syncStripPlayback();
+  }
+
+  function stripActiveVideo() {
+    if (!stripSwiper) return null;
+    var activeSlide =
+      stripSwiper.el.querySelector('.swiper-slide-active') ||
+      stripSwiper.slides[stripSwiper.activeIndex];
+    return activeSlide && activeSlide.querySelector('video');
+  }
+
+  function syncStripPlayback() {
+    var active = stripActiveVideo();
+    // 暂停横滑区全部视频,再播放当前激活的
+    document.querySelectorAll('.strip-video').forEach(function (v) { v.pause(); });
+    if (active) active.play().catch(function () {});
+  }
+
+  /** IntersectionObserver:横滑区滚出视口时全部暂停,回来只播当前 */
+  function observeStrip() {
+    var stripEl = document.querySelector('.strip');
+    if (!stripEl || !('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) syncStripPlayback();
+        else document.querySelectorAll('.strip-video').forEach(function (v) { v.pause(); });
+      });
+    }, { threshold: 0.25 });
+    io.observe(stripEl);
+  }
+
+  function onStripClick(item) {
+    var params = new URLSearchParams();
+    params.set('src', item.video);
+    if (item.title) params.set('title', item.title);
+    if (item.tag) params.set('tag', item.tag);
+    window.location.href = 'video-player.html?' + params.toString();
   }
 
   /* ---------------- 播放控制 ---------------- */
@@ -315,6 +442,7 @@
   function init() {
     if (!BANNER_VIDEOS.length) return;
     renderSlides();
+    renderStrip();
     renderCards();
 
     bannerSwiper = new Swiper('.banner-swiper', SWIPER_CONFIG);
@@ -335,16 +463,27 @@
 
     updatePreload();
     playCurrentVideo();
+
+    observeStrip();
   }
 
-  /** 从后台 API 拉取已启用且处理完成的 banner 列表 */
+  /** 从后台 API 拉取已启用且处理完成的 banner 列表,并按方向分组 */
   function loadBanners() {
     return fetch('/api/banners', { cache: 'no-store' })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        BANNER_VIDEOS = (data.banners || []).filter(function (b) {
+        var ready = (data.banners || []).filter(function (b) {
           return b.enabled && b.status === 'ready' && b.video;
         });
+        // 主 banner 轮播只用横屏;横滑区优先竖屏,没有竖屏时回退横屏
+        // 方向未知的(基本是处理中)两边都不进,避免串组显示
+        BANNER_VIDEOS = ready.filter(function (b) {
+          return b.effOrientation === 'landscape';
+        });
+        STRIP_VIDEOS = ready.filter(function (b) {
+          return b.effOrientation === 'portrait';
+        });
+        if (!STRIP_VIDEOS.length) STRIP_VIDEOS = BANNER_VIDEOS.slice();
       })
       .catch(function () { BANNER_VIDEOS = []; });
   }

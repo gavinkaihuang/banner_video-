@@ -110,13 +110,32 @@
     .url-form { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; align-items: end; }
     .url-form .field--url { grid-column: 1 / -1; }
 
-    /* ---- Banner 列表 ---- */
-    .list-head {
-      display: flex; align-items: baseline; gap: 10px; margin: 0 2px 12px;
+    /* ---- Banner 列表(横屏 / 竖屏 Tab) ---- */
+    .list-tabs {
+      display: flex; align-items: center; gap: 4px;
+      margin: 0 0 14px;
+      border-bottom: 1px solid var(--line);
     }
-    .list-head h2 { font-size: 15px; margin: 0; }
-    .list-head .hint { font-size: 12px; color: var(--text-2); }
+    .list-tab {
+      appearance: none; border: none; background: none; cursor: pointer;
+      font: inherit; font-size: 14px; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px 10px; color: var(--text-2);
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .list-tab:hover { color: var(--text); }
+    .list-tab.is-active { color: var(--accent); border-bottom-color: var(--accent); }
+    .list-tab .count {
+      font-size: 11px; font-weight: 600; padding: 1px 7px;
+      border-radius: 999px; color: var(--accent); background: var(--accent-soft);
+    }
+    .list-tabs .hint {
+      margin-left: auto; margin-bottom: 6px;
+      font-size: 12px; color: var(--text-2);
+    }
     .cards { display: flex; flex-direction: column; gap: 12px; }
+    /* display:flex 会压过 UA 的 [hidden]{display:none},必须显式声明隐藏 */
+    .cards[hidden] { display: none; }
     .card {
       display: grid; grid-template-columns: 168px 1fr; gap: 16px;
       background: var(--surface);
@@ -279,12 +298,19 @@
       </div>
     </section>
 
-    <!-- 列表 -->
-    <div class="list-head">
-      <h2>Banner 列表</h2>
-      <span class="hint">拖动左侧封面排序 · 前台只展示「启用」且处理完成的</span>
+    <!-- 列表:横屏 / 竖屏两个 Tab,各自独立排序与启停,前台按分组分别取用 -->
+    <div class="list-tabs" role="tablist" aria-label="Banner 分组">
+      <button type="button" class="list-tab is-active" id="tab-landscape" role="tab" aria-selected="true" aria-controls="cards-landscape">
+        横屏 <span class="count" id="count-landscape">0</span>
+      </button>
+      <button type="button" class="list-tab" id="tab-portrait" role="tab" aria-selected="false" aria-controls="cards-portrait">
+        竖屏 <span class="count" id="count-portrait">0</span>
+      </button>
+      <span class="hint">上传后按视频宽高比自动归类 · 拖动左侧封面在组内排序</span>
     </div>
-    <section class="cards" id="cards" aria-live="polite"></section>
+
+    <section class="cards" id="cards-landscape" role="tabpanel" aria-labelledby="tab-landscape"></section>
+    <section class="cards" id="cards-portrait" role="tabpanel" aria-labelledby="tab-portrait" hidden></section>
 
     <!-- 转码试验台 -->
     <section class="lab" aria-label="转码试验台">
@@ -411,6 +437,7 @@
           var data = JSON.parse(xhr.responseText);
           if (xhr.status >= 400) throw new Error(data.error || '上传失败');
           toast('已上传,后台处理中…');
+          trackPending(data.banner);
           pendingFile = null;
           fileInput.value = '';
           uploadForm.classList.remove('is-open');
@@ -452,8 +479,9 @@
         url: url,
         title: $('#url-title').value.trim(),
         tag: $('#url-tag').value.trim()
-      }).then(function () {
+      }).then(function (data) {
         toast('已添加,服务器下载并处理中…');
+        trackPending(data.banner);
         $('#url-input').value = '';
         $('#url-title').value = '';
         $('#url-tag').value = '';
@@ -466,9 +494,28 @@
       });
     });
 
-    /* ---------------- Banner 列表 ---------------- */
-    var cardsEl = $('#cards');
+    /* ---------------- Banner 列表(横屏 / 竖屏 Tab) ---------------- */
+    // 当前 Tab:landscape | portrait;渲染与排序都只作用于对应容器
+    var TABS = {
+      landscape: { tabEl: $('#tab-landscape'), el: $('#cards-landscape'), countEl: $('#count-landscape') },
+      portrait:  { tabEl: $('#tab-portrait'),  el: $('#cards-portrait'),  countEl: $('#count-portrait') }
+    };
+    var currentTab = 'landscape';
     var polling = null;
+
+    /** 切换 Tab:只显示对应容器,更新 aria 状态 */
+    function switchTab(which) {
+      if (!TABS[which]) return;
+      currentTab = which;
+      Object.keys(TABS).forEach(function (k) {
+        var on = k === which;
+        TABS[k].tabEl.classList.toggle('is-active', on);
+        TABS[k].tabEl.setAttribute('aria-selected', on ? 'true' : 'false');
+        TABS[k].el.hidden = !on;
+      });
+    }
+    TABS.landscape.tabEl.addEventListener('click', function () { switchTab('landscape'); });
+    TABS.portrait.tabEl.addEventListener('click', function () { switchTab('portrait'); });
 
     function statusChip(b) {
       if (b.status === 'processing') return '<span class="status status--processing">处理中…</span>';
@@ -477,12 +524,34 @@
       return '<span class="status status--ready">已上线</span>';
     }
 
+    /** 方向归类说明文案:手动指定时标注来源 */
+    function orientHint(b) {
+      if (b.orientation === 'landscape' || b.orientation === 'portrait') return '手动指定';
+      if (b.width && b.height) return '按分辨率 ' + b.width + '×' + b.height + ' 自动判定';
+      return '待探测';
+    }
+
     function renderList(banners) {
-      if (!banners.length) {
-        cardsEl.innerHTML = '<div class="empty">还没有 Banner,先上传一个视频吧</div>';
-        return;
+      // 方向未知(刚上传、宽高还没探测出来)的条目不进任何 Tab,
+      // 轮询会等它归组后自动出现在对应 Tab;通常探测只需几秒
+      var pending = banners.filter(function (b) {
+        return b.status === 'processing' && (!b.width || !b.height);
+      });
+      if (pending.length) {
+        clearTimeout(polling);
+        polling = setTimeout(refresh, 2000);
       }
-      cardsEl.innerHTML = banners.map(function (b) {
+      Object.keys(TABS).forEach(function (key) {
+        var g = TABS[key];
+        var items = banners.filter(function (b) {
+          return b.effOrientation === key;   // 严格匹配,不兜底
+        });
+        g.countEl.textContent = items.length;
+        if (!items.length) {
+          g.el.innerHTML = '<div class="empty">还没有' + (key === 'portrait' ? '竖屏' : '横屏') + ' Banner,上传后按视频宽高比自动归类</div>';
+          return;
+        }
+        g.el.innerHTML = items.map(function (b) {
         var media = b.poster
           ? '<img src="' + esc(b.poster) + '" alt="" loading="lazy" />'
           : (b.video
@@ -505,6 +574,14 @@
               '<div class="card-row">' +
                 '<input type="text" class="link-in" value="' + esc(b.link || '') + '" placeholder="点击跳转链接(可空)" aria-label="跳转链接" />' +
               '</div>' +
+              '<div class="card-row">' +
+                '<label class="switch" style="cursor:default">归类:<select class="orient-in" aria-label="归类方向">' +
+                  '<option value="auto"' + (b.orientation !== 'portrait' && b.orientation !== 'landscape' ? ' selected' : '') + '>自动(' + esc(orientHint(b)) + ')</option>' +
+                  '<option value="landscape"' + (b.orientation === 'landscape' ? ' selected' : '') + '>横屏</option>' +
+                  '<option value="portrait"' + (b.orientation === 'portrait' ? ' selected' : '') + '>竖屏</option>' +
+                '</select></label>' +
+                '<span class="hint" style="font-size:11px;color:var(--text-2)">改归类会移动到对应分组并影响前台展示位置</span>' +
+              '</div>' +
               (b.error ? '<div class="err-msg">' + esc(b.error) + '</div>' : '') +
               '<div class="card-row">' +
                 '<button class="btn btn--sm act-save">保存</button>' +
@@ -524,10 +601,12 @@
               '</div>' +
             '</div>' +
           '</article>';
-      }).join('');
+        }).join('');
+      });
     }
 
-    cardsEl.addEventListener('click', function (e) {
+    // 事件代理绑定到两个 Tab 容器(共用同一套处理器)
+    var clickHandler = function (e) {
       var card = e.target.closest('.card');
       if (!card) return;
       var id = card.dataset.id;
@@ -568,9 +647,23 @@
           .then(function () { toast('封面已更新'); refresh(); })
           .catch(function (err) { toast(err.message); });
       }
-    });
+    };
 
-    cardsEl.addEventListener('input', function (e) {
+    // 归类切换:立即 PUT orientation,成功后切到目标 Tab 并整表刷新(卡片随方向移动)
+    var changeHandler = function (e) {
+      if (!e.target.classList.contains('orient-in')) return;
+      var val = e.target.value;
+      var card = e.target.closest('.card');
+      api('PUT', '/api/banners/' + card.dataset.id, { orientation: val })
+        .then(function () {
+          toast('归类已更新');
+          if (val === 'landscape' || val === 'portrait') switchTab(val);
+          refresh();
+        })
+        .catch(function (err) { toast(err.message); });
+    };
+
+    var inputHandler = function (e) {
       if (e.target.classList.contains('time-range')) {
         e.target.closest('.time-row').querySelector('.time-val').textContent =
           parseFloat(e.target.value).toFixed(1) + 's';
@@ -581,6 +674,14 @@
           .then(function () { toast(e.target.checked ? '已启用' : '已停用'); refresh(); })
           .catch(function (err) { toast(err.message); });
       }
+    };
+
+    // 绑定到两个 Tab 容器
+    Object.keys(TABS).forEach(function (k) {
+      var el = TABS[k].el;
+      el.addEventListener('click', clickHandler);
+      el.addEventListener('input', inputHandler);
+      el.addEventListener('change', changeHandler);
     });
 
     function loadFrames(card, id) {
@@ -594,40 +695,73 @@
       }).catch(function (err) { toast(err.message); });
     }
 
-    /* ---------------- 拖动排序 ---------------- */
+    /* ---------------- 拖动排序(组内;提交时合并两组顺序) ---------------- */
     var dragEl = null;
-    cardsEl.addEventListener('dragstart', function (e) {
+    var dragHost = null;   // 拖动发生的分组容器,插入操作只在该组内进行
+    var dragStartHandler = function (e) {
       var card = e.target.closest('.card');
       if (!card) return;
       dragEl = card;
+      dragHost = e.currentTarget;
       card.classList.add('is-dragging');
       e.dataTransfer.effectAllowed = 'move';
-    });
-    cardsEl.addEventListener('dragend', function () {
+    };
+    var dragEndHandler = function () {
       if (dragEl) dragEl.classList.remove('is-dragging');
-      cardsEl.querySelectorAll('.card').forEach(function (c) { c.classList.remove('drag-over'); });
-      var ids = Array.from(cardsEl.querySelectorAll('.card')).map(function (c) { return c.dataset.id; });
+      // 合并两个 Tab 的当前顺序一次性提交(后端按数组索引重排 order)
+      var ids = Object.keys(TABS).reduce(function (acc, k) {
+        return acc.concat(Array.from(TABS[k].el.querySelectorAll('.card')).map(function (c) {
+          return c.dataset.id;
+        }));
+      }, []);
       dragEl = null;
+      dragHost = null;
       api('PUT', '/api/banners-order', { ids: ids })
         .then(function () { toast('顺序已保存'); })
         .catch(function (err) { toast(err.message); });
-    });
-    cardsEl.addEventListener('dragover', function (e) {
+    };
+    var dragOverHandler = function (e) {
       e.preventDefault();
       var over = e.target.closest('.card');
-      if (!over || !dragEl || over === dragEl) return;
+      // 只允许插入到同一 Tab 的容器:e.currentTarget === dragHost
+      if (!over || !dragEl || over === dragEl || e.currentTarget !== dragHost) return;
       var rect = over.getBoundingClientRect();
       var before = (e.clientY - rect.top) < rect.height / 2;
-      cardsEl.insertBefore(dragEl, before ? over : over.nextSibling);
+      dragHost.insertBefore(dragEl, before ? over : over.nextSibling);
+    };
+    Object.keys(TABS).forEach(function (k) {
+      var el = TABS[k].el;
+      el.addEventListener('dragstart', dragStartHandler);
+      el.addEventListener('dragend', dragEndHandler);
+      el.addEventListener('dragover', dragOverHandler);
     });
 
     /* ---------------- 轮询刷新(有处理中任务时) ---------------- */
+    // 记录新上传(处理中)的 banner id:处理完成后自动切到它所属的 Tab
+    var pendingIds = [];
+
+    function trackPending(banner) {
+      if (banner && banner.id) pendingIds.push(banner.id);
+    }
+
     function refresh() {
       api('GET', '/api/banners').then(function (data) {
         renderList(data.banners);
+        // 新上传的处理完成:按其生效方向切到对应 Tab,让用户直接看到归组结果
+        pendingIds = pendingIds.filter(function (pid) {
+          var b = data.banners.find(function (x) { return x.id === pid; });
+          if (!b) return false;                       // 已被删除,不再跟踪
+          if (b.status === 'processing') return true; // 还在处理,继续等
+          var target = b.effOrientation || 'landscape';
+          if (target !== currentTab) switchTab(target);
+          toast('「' + (b.title || '新视频') + '」已归入' +
+            (target === 'portrait' ? '竖屏' : '横屏') +
+            (b.status === 'failed' ? '(处理失败)' : ''));
+          return false;
+        });
         var busy = data.banners.some(function (b) { return b.status === 'processing'; });
         clearTimeout(polling);
-        if (busy) polling = setTimeout(refresh, 2000);
+        if (busy || pendingIds.length) polling = setTimeout(refresh, 2000);
       }).catch(function (err) { toast(err.message); });
     }
 

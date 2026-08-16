@@ -90,17 +90,19 @@ node server.js
 - **自动转码**:本地上传的视频自动转成 Banner 规格 —— 640×360、H.264、CRF 26、去音轨、`+faststart`(moov 前置,满足 OSS 只支持 MP4 + Range 渐进下载的约束)。「视频链接」方式不转码,直接用原始地址。
 - **封面生成**:自动在视频的 20% / 50% / 80% 处抽 3 张候选帧(跳过黑场片头);点选其一作为封面,或用时间轴滑块在任意秒数「抽这一帧」。换封面后 URL 自动加 `?v=` 时间戳防缓存。
 - **内容管理**:标题 / 标签 / 链接内联编辑、启用开关、拖拽排序、删除(连同视频 / 封面 / 帧文件一起清理)。
+- **横屏 / 竖屏 Tab 分组**:列表分成「横屏」「竖屏」两个 Tab,各自独立排序与启停。上传后按视频宽高比自动归组(宽 ≥ 高 = 横屏),处理完成自动切到该视频所在的 Tab;也可在卡片上手动改归类(自动 / 横屏 / 竖屏),手动指定优先于自动判定。
+- **方向感知转码**:本地上传的横屏视频转 640×360、竖屏视频转 360×640 画布(黑边补齐不裁切),前台两个展示位各自取对应分组的数据。
 - **转码试验场**:任选本地视频按 360p / 720p / 1080p 预设转码,直接对比产物体积与耗时,用于调参。
 
 ### API 一览
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/banners` | Banner 列表(按 order 排序) |
+| GET | `/api/banners` | Banner 列表(按 order 排序,每条带 `effOrientation` 生效方向);`?orientation=landscape\|portrait` 只取对应分组 |
 | POST | `/api/banners` | 上传视频(multipart:`file` + `title`/`tag`),返回处理中的记录 |
 | POST | `/api/banners-from-url` | 通过视频 URL 创建:`{url, title?, tag?}`,服务器下载一份样本(≤100MB)用于探测和抽帧,**播放直接引用原始 URL**,不占本服务器带宽 |
 | GET | `/api/banners/:id` | 单条详情 |
-| PUT | `/api/banners/:id` | 更新 `title` / `tag` / `link` / `enabled` |
+| PUT | `/api/banners/:id` | 更新 `title` / `tag` / `link` / `enabled` / `orientation`(`auto`/`landscape`/`portrait`) |
 | PUT | `/api/banners-order` | 保存排序,body:`{ids: [...]}` |
 | DELETE | `/api/banners/:id` | 删除(连带清理视频 / 封面 / 帧文件) |
 | GET | `/api/banners/:id/frames` | 候选封面帧列表(含时间点) |
