@@ -340,7 +340,7 @@ function route(method, pattern, handler) {
 }
 
 /* ---- 列表(公共:前台轮播也读这个;?orientation=landscape|portrait 过滤) ---- */
-route('GET', '/api/banners', (req, res, params, query) => {
+route('GET', '/api/banners', async (req, res, params, query) => {
   const data = loadData();
   let list = data.banners
     .slice()
@@ -348,9 +348,17 @@ route('GET', '/api/banners', (req, res, params, query) => {
   if (query.orientation === 'landscape' || query.orientation === 'portrait') {
     list = list.filter((b) => effectiveOrientation(b) === query.orientation);
   }
-  sendJson(res, 200, {
-    banners: list.map((b) => ({ ...publicBanner(b), effOrientation: effectiveOrientation(b) }))
-  });
+  // 附加视频文件大小(本地文件实时 stat;URL 导入的播放源在远端,为 null)
+  // Promise.all 按输入顺序返回,排序不受 stat 完成时机影响
+  const banners = await Promise.all(list.map(async (b) => {
+    const item = { ...publicBanner(b), effOrientation: effectiveOrientation(b) };
+    const local = safeAssetPath(String(b.video || '').split('?')[0]);
+    const stat = local ? await fs.promises.stat(local).catch(() => null) : null;
+    item.size = stat ? stat.size : null;
+    item.sizeText = stat ? fmtBytes(stat.size) : null;
+    return item;
+  }));
+  sendJson(res, 200, { banners });
 });
 
 /* ---- 视频总表:横屏/竖屏两组,含名称、大小、URL、封面等,供外部直接取用 ---- */

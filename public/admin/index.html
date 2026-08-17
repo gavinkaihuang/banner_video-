@@ -191,6 +191,12 @@
       background: rgb(0 0 0 / 0.5); padding: 4px 6px; border-radius: 4px;
       pointer-events: none;
     }
+    .card-media .sz {
+      position: absolute; left: 6px; bottom: 6px;
+      font-size: 10px; line-height: 1; color: #fff;
+      background: rgb(0 0 0 / 0.5); padding: 4px 6px; border-radius: 4px;
+      pointer-events: none;
+    }
 
     .card-body { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
     .card-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -605,6 +611,10 @@
             '<div class="card-media" draggable="true" title="拖动排序">' +
               media +
               '<span class="drag-hint">⠿ 拖动排序</span>' +
+              // 大小角标:本地文件显示体积,URL 导入的播放源在远端标"远程"
+              (b.video
+                ? '<span class="sz">' + (b.sizeText || '远程') + '</span>'
+                : '') +
               (b.duration ? '<span class="dur">' + b.duration + 's</span>' : '') +
             '</div>' +
             '<div class="card-body">' +
