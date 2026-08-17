@@ -93,62 +93,6 @@
     onSlideClick(event);
   }
 
-  function renderCards() {
-    var list = document.getElementById('card-list');
-    if (!list) return;
-    var fragment = document.createDocumentFragment();
-
-    // 推荐列表展示全部(横屏 + 竖屏)
-    BANNER_VIDEOS.concat(STRIP_VIDEOS).forEach(function (item) {
-      var card = document.createElement('li');
-      card.className = 'card';
-
-      var media = document.createElement('div');
-      media.className = 'card-media';
-      if (item.poster) {
-        var img = document.createElement('img');
-        img.src = item.poster;
-        img.alt = (item.title || '视频') + ' 封面';
-        img.loading = 'lazy';
-        img.width = 640;
-        img.height = 360;
-        media.appendChild(img);
-      }
-      if (item.duration) {
-        var dur = document.createElement('span');
-        dur.className = 'card-duration';
-        dur.textContent = item.duration + 's';
-        media.appendChild(dur);
-      }
-
-      var body = document.createElement('div');
-      body.className = 'card-body';
-      var titleEl = document.createElement('h3');
-      titleEl.className = 'card-title';
-      titleEl.textContent = item.title || '未命名';
-      var tagEl = document.createElement('p');
-      tagEl.className = 'card-desc';
-      tagEl.textContent = item.tag || '视频';
-      body.appendChild(titleEl);
-      body.appendChild(tagEl);
-
-      card.appendChild(media);
-      card.appendChild(body);
-
-      card.dataset.video = item.video;
-      card.dataset.title = item.title || '';
-      card.dataset.tag = item.tag || '';
-      card.tabIndex = 0;
-      card.setAttribute('role', 'link');
-      card.addEventListener('click', onSlideClick);
-      card.addEventListener('keydown', onSlideKeydown);
-
-      fragment.appendChild(card);
-    });
-
-    list.appendChild(fragment);
-  }
-
   /* ---------------- 原生宽高比横滑区 ---------------- */
 
   /**
@@ -220,18 +164,33 @@
 
     wrapper.appendChild(fragment);
 
-    // 全横屏(且比例接近)时不必横滑,单 slide 撑满即可;混合比例仍需滚动
+    // 全横屏(且比例接近)时不必横滑,单 slide 撑满即可;混合比例仍需滚动。
+    // loop 需要内容宽度明显超过容器(约 2 倍),视频太少时开 loop 会失效并告警
+    function stripCanLoop() {
+      var stripEl = document.querySelector('.strip');
+      if (!stripEl) return false;
+      var width = Array.prototype.reduce.call(
+        wrapper.children,
+        function (sum, el) { return sum + el.offsetWidth; },
+        (STRIP_VIDEOS.length - 1) * 10 // spaceBetween
+      );
+      return width > stripEl.clientWidth * 2;
+    }
     stripSwiper = new Swiper('.strip-swiper', {
       slidesPerView: 'auto',
       spaceBetween: 10,
       centeredSlides: true,
-      loop: STRIP_VIDEOS.length > 2,
+      loop: stripCanLoop(),
       grabCursor: true,
       autoplay: false
     });
 
-    // 当前居中的 slide 播放,其余暂停;滑走即暂停
+    // slideChange 触发时 .swiper-slide-active 类还挂在旧 slide 上(过渡结束才移过去),
+    // 此时同步播放会把旧视频又播回去;所以先立即暂停,过渡结束后再播新 slide
     stripSwiper.on('slideChange', function () {
+      document.querySelectorAll('.strip-video').forEach(function (v) { v.pause(); });
+    });
+    stripSwiper.on('slideChangeTransitionEnd', function () {
       syncStripPlayback();
     });
     syncStripPlayback();
@@ -443,7 +402,6 @@
     if (!BANNER_VIDEOS.length) return;
     renderSlides();
     renderStrip();
-    renderCards();
 
     bannerSwiper = new Swiper('.banner-swiper', SWIPER_CONFIG);
     bannerSwiper.on('slideChange', handleSlideChange);
@@ -483,7 +441,14 @@
         STRIP_VIDEOS = ready.filter(function (b) {
           return b.effOrientation === 'portrait';
         });
-        if (!STRIP_VIDEOS.length) STRIP_VIDEOS = BANNER_VIDEOS.slice();
+        if (!STRIP_VIDEOS.length) {
+          // 没有竖屏内容时横滑区回退展示横屏组,分区文案同步改掉,避免文不对题
+          STRIP_VIDEOS = BANNER_VIDEOS.slice();
+          var kicker = document.getElementById('zone-strip-kicker');
+          var hint = document.getElementById('zone-strip-hint');
+          if (kicker) kicker.textContent = '横屏 · 16:9';
+          if (hint) hint.textContent = '暂无竖屏内容 · 先看横屏精选';
+        }
       })
       .catch(function () { BANNER_VIDEOS = []; });
   }

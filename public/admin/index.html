@@ -136,6 +136,25 @@
     .cards { display: flex; flex-direction: column; gap: 12px; }
     /* display:flex 会压过 UA 的 [hidden]{display:none},必须显式声明隐藏 */
     .cards[hidden] { display: none; }
+
+    /* 处理中/失败的占位条:比正式卡片更轻量,只保留状态、标题和删除 */
+    .cards.pending { gap: 8px; margin-bottom: 14px; }
+    .card--pending {
+      display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+    }
+    .card--pending .spin {
+      flex-shrink: 0; width: 10px; height: 10px; border-radius: 50%;
+      background: var(--warn);
+      animation: pending-pulse 1.2s ease-in-out infinite;
+    }
+    .card--pending.is-failed .spin { background: var(--danger); animation: none; }
+    .card--pending .p-title {
+      font-size: 13px; font-weight: 600; min-width: 0; max-width: 220px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .card--pending .p-hint { flex: 1; min-width: 0; font-size: 12px; color: var(--text-2); }
+    .card--pending.is-failed .p-hint { color: var(--danger); }
+    @keyframes pending-pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
     .card {
       display: grid; grid-template-columns: 168px 1fr; gap: 16px;
       background: var(--surface);
@@ -154,6 +173,9 @@
       background: oklch(20% 0.012 290);
       cursor: grab; flex-shrink: 0;
     }
+    /* 竖屏分组的封面位改成 9:16 竖版,避免竖屏视频被横向裁切显示 */
+    #cards-portrait .card { grid-template-columns: 96px 1fr; }
+    #cards-portrait .card-media { width: 96px; height: 168px; }
     .card-media img, .card-media video {
       width: 100%; height: 100%; object-fit: cover; display: block;
     }
@@ -309,6 +331,9 @@
       <span class="hint">上传后按视频宽高比自动归类 · 拖动左侧封面在组内排序</span>
     </div>
 
+    <!-- 处理中/处理失败且方向未知的条目:置顶占位,探测归组后自动进入下方对应 Tab -->
+    <section class="cards pending" id="cards-pending" aria-label="处理中的视频" hidden></section>
+
     <section class="cards" id="cards-landscape" role="tabpanel" aria-labelledby="tab-landscape"></section>
     <section class="cards" id="cards-portrait" role="tabpanel" aria-labelledby="tab-portrait" hidden></section>
 
@@ -457,7 +482,8 @@
     /* ---------------- 来源切换 & 视频链接添加 ---------------- */
     var tabFile = $('#tab-file');
     var tabUrl = $('#tab-url');
-    function switchTab(which) {
+    // 注意:与横竖屏 Tab 的 switchTab 同名会互相覆盖,这里必须用独立命名
+    function switchSrcTab(which) {
       var isFile = which === 'file';
       tabFile.classList.toggle('is-active', isFile);
       tabUrl.classList.toggle('is-active', !isFile);
@@ -466,8 +492,8 @@
       $('#pane-file').hidden = !isFile;
       $('#pane-url').hidden = isFile;
     }
-    tabFile.addEventListener('click', function () { switchTab('file'); });
-    tabUrl.addEventListener('click', function () { switchTab('url'); });
+    tabFile.addEventListener('click', function () { switchSrcTab('file'); });
+    tabUrl.addEventListener('click', function () { switchSrcTab('url'); });
 
     $('#url-form').addEventListener('submit', function (e) {
       e.preventDefault();
@@ -502,6 +528,7 @@
     };
     var currentTab = 'landscape';
     var polling = null;
+    var lastBanners = []; // 最近一次渲染的列表,事件代理里按 id 取数据用
 
     /** 切换 Tab:只显示对应容器,更新 aria 状态 */
     function switchTab(which) {
@@ -532,12 +559,28 @@
     }
 
     function renderList(banners) {
-      // 方向未知(刚上传、宽高还没探测出来)的条目不进任何 Tab,
-      // 轮询会等它归组后自动出现在对应 Tab;通常探测只需几秒
+      lastBanners = banners; // 供预览弹窗按 id 查询视频地址与方向
+      // 方向未知(刚上传、宽高还没探测出来)的条目先进占位区,
+      // 轮询等它归组后自动消失、出现在对应 Tab;失败且未归组的也留在这里展示错误
+      var pendingEl = $('#cards-pending');
       var pending = banners.filter(function (b) {
-        return b.status === 'processing' && (!b.width || !b.height);
+        return b.effOrientation === 'unknown' &&
+          (b.status === 'processing' || b.status === 'failed');
       });
-      if (pending.length) {
+      pendingEl.hidden = !pending.length;
+      pendingEl.innerHTML = pending.map(function (b) {
+        var failed = b.status === 'failed';
+        return '' +
+          '<article class="card card--pending' + (failed ? ' is-failed' : '') + '" data-id="' + b.id + '">' +
+            '<span class="spin" aria-hidden="true"></span>' +
+            '<span class="p-title">' + esc(b.title || '新视频') + '</span>' +
+            '<span class="p-hint">' + (failed
+              ? '处理失败:' + esc(b.error || '未知错误')
+              : '处理中…下载/探测完成后自动归入横屏或竖屏') + '</span>' +
+            '<button class="btn btn--sm btn--danger act-del">删除</button>' +
+          '</article>';
+      }).join('');
+      if (pending.some(function (b) { return b.status === 'processing'; })) {
         clearTimeout(polling);
         polling = setTimeout(refresh, 2000);
       }
@@ -586,7 +629,7 @@
               '<div class="card-row">' +
                 '<button class="btn btn--sm act-save">保存</button>' +
                 '<button class="btn btn--sm act-poster"' + (b.status === 'ready' ? '' : ' disabled') + '>封面</button>' +
-                '<a class="btn btn--sm" href="/video-player.html?src=' + encodeURIComponent(b.video || '') + '&title=' + encodeURIComponent(b.title || '') + '" target="_blank"' + (b.video ? '' : ' hidden') + '>预览</a>' +
+                '<button type="button" class="btn btn--sm act-preview"' + (b.video ? '' : ' disabled') + '>预览</button>' +
                 '<span class="spacer" style="flex:1"></span>' +
                 '<button class="btn btn--sm btn--danger act-del">删除</button>' +
               '</div>' +
@@ -626,6 +669,12 @@
         api('DELETE', '/api/banners/' + id)
           .then(function () { toast('已删除'); refresh(); })
           .catch(function (err) { toast(err.message); });
+      }
+
+      if (e.target.closest('.act-preview')) {
+        var b = lastBanners.find(function (x) { return x.id === id; });
+        if (!b || !b.video) return;
+        openPreview(b);
       }
 
       if (e.target.closest('.act-poster')) {
@@ -676,13 +725,28 @@
       }
     };
 
-    // 绑定到两个 Tab 容器
+    // 绑定到两个 Tab 容器;占位区只需要 click(删除),input/change 的目标元素不存在,复用同一处理器是安全的
     Object.keys(TABS).forEach(function (k) {
       var el = TABS[k].el;
       el.addEventListener('click', clickHandler);
       el.addEventListener('input', inputHandler);
       el.addEventListener('change', changeHandler);
     });
+    $('#cards-pending').addEventListener('click', clickHandler);
+
+    /** 预览弹窗:独立小窗播放,按横/竖屏取对应比例的窗口尺寸并居中;
+        命名窗口让多次点击复用同一个预览窗,不会越开越多 */
+    function openPreview(b) {
+      var portrait = b.effOrientation === 'portrait';
+      var w = portrait ? 400 : 780;
+      var h = portrait ? 800 : 500;
+      var left = Math.max(0, Math.round((screen.width - w) / 2));
+      var top = Math.max(0, Math.round((screen.height - h) / 2));
+      var url = '/video-player.html?src=' + encodeURIComponent(b.video) +
+        '&title=' + encodeURIComponent(b.title || '');
+      window.open(url, 'banner-preview',
+        'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top);
+    }
 
     function loadFrames(card, id) {
       api('GET', '/api/banners/' + id + '/frames').then(function (data) {

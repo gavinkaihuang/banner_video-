@@ -26,42 +26,49 @@
     </header>
 
     <main class="app-main">
-      <!-- Banner 视频轮播位 -->
-      <section class="banner" aria-label="Banner 视频轮播">
-        <div class="swiper banner-swiper">
-          <div class="swiper-wrapper" id="banner-wrapper"></div>
-          <div class="swiper-pagination banner-pagination"></div>
+      <!-- 横屏区:顶部宽幅自动轮播 -->
+      <section class="zone" aria-labelledby="zone-banner-title">
+        <header class="zone-head">
+          <span class="zone-kicker">横屏 · 16:9</span>
+          <h2 class="zone-title" id="zone-banner-title">焦点轮播</h2>
+          <span class="zone-hint">自动播放 · 可左右滑动切换</span>
+        </header>
+        <div class="banner" aria-label="Banner 视频轮播">
+          <div class="swiper banner-swiper">
+            <div class="swiper-wrapper" id="banner-wrapper"></div>
+            <div class="swiper-pagination banner-pagination"></div>
+          </div>
+          <button
+            type="button"
+            class="banner-toggle"
+            id="banner-toggle"
+            aria-label="暂停轮播"
+            aria-pressed="false"
+          >
+            <svg class="banner-toggle__icon banner-toggle__pause" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
+              <path d="M7 5v14M17 5v14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+            </svg>
+            <svg class="banner-toggle__icon banner-toggle__play" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
+              <path d="M8 5v14l11-7z" fill="currentColor" />
+            </svg>
+          </button>
         </div>
-        <button
-          type="button"
-          class="banner-toggle"
-          id="banner-toggle"
-          aria-label="暂停轮播"
-          aria-pressed="false"
-        >
-          <svg class="banner-toggle__icon banner-toggle__pause" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
-            <path d="M7 5v14M17 5v14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
-          </svg>
-          <svg class="banner-toggle__icon banner-toggle__play" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
-            <path d="M8 5v14l11-7z" fill="currentColor" />
-          </svg>
-        </button>
       </section>
 
-      <!-- 原生宽高比横滑区:视频按原始比例定宽(竖屏变窄不裁切),左右滑动浏览 -->
-      <section class="strip" aria-label="视频适配预览(原始宽高比)">
-        <div class="swiper strip-swiper">
-          <div class="swiper-wrapper" id="strip-wrapper"></div>
-        </div>
-      </section>
+      <div class="zone-divider" role="separator" aria-hidden="true"></div>
 
-      <!-- 正文占位区域 -->
-      <section class="content" aria-labelledby="content-heading">
-        <div class="content-head">
-          <h2 class="content-title" id="content-heading">为你推荐</h2>
-          <span class="content-sub">精选短片 · 顶部 Banner 可左右滑动切换</span>
+      <!-- 竖屏区:原生宽高比横滑,视频按原始比例定宽(竖屏变窄不裁切) -->
+      <section class="zone" aria-labelledby="zone-strip-title">
+        <header class="zone-head">
+          <span class="zone-kicker" id="zone-strip-kicker">竖屏 · 9:16</span>
+          <h2 class="zone-title" id="zone-strip-title">竖屏精选</h2>
+          <span class="zone-hint" id="zone-strip-hint">原始比例 · 左右滑动浏览</span>
+        </header>
+        <div class="strip" aria-label="竖屏视频横滑区">
+          <div class="swiper strip-swiper">
+            <div class="swiper-wrapper" id="strip-wrapper"></div>
+          </div>
         </div>
-        <ul class="card-list" id="card-list"></ul>
       </section>
 
       <footer class="app-foot">

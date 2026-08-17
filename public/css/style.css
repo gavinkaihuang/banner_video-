@@ -124,7 +124,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 
 /* ---------- Banner 轮播 ---------- */
 .banner {
-  margin: 16px 8px 0;        /* 左右 8px 边距(移动端常见) */
+  margin: 0 8px;            /* 左右 8px 边距(移动端常见);上边距由分区头承担 */
   height: var(--banner-height);
   border-radius: var(--banner-radius);
   overflow: hidden;
@@ -280,7 +280,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 /* 与 banner 同高;slide 宽度由视频原始宽高比决定(高固定、宽自适应),
    竖屏视频按 9:16 显示为窄条,不裁切不拉伸;两侧露出相邻 slide 提示可滑 */
 .strip {
-  margin: 14px 8px 0;
+  margin: 0 8px;
   height: var(--banner-height);
   border-radius: var(--banner-radius);
 }
@@ -336,61 +336,57 @@ ul { margin: 0; padding: 0; list-style: none; }
   border-radius: 999px;
 }
 
-/* ---------- 正文区域 ---------- */
-.content { padding: 22px 16px 8px; }
-.content-head { margin-bottom: 14px; }
-.content-title {
-  margin: 0 0 2px;
+/* ---------- 分区(横屏 / 竖屏) ---------- */
+.zone { padding-top: 18px; }
+.zone-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px 10px;
+}
+/* 比例标签:小圆角胶囊,暖橙描边呼应强调色 */
+.zone-kicker {
+  flex-shrink: 0;
+  padding: 3px 8px;
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 10.5px;
   font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--c-accent-deep);
+  background: oklch(70% 0.185 45 / 0.14);
+  border: 1px solid oklch(70% 0.185 45 / 0.3);
+  border-radius: 999px;
 }
-.content-sub { font-size: 12.5px; color: var(--c-ink-soft); }
+.zone-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.zone-hint {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--c-ink-soft);
+}
 
-.card-list { display: flex; flex-direction: column; gap: 14px; }
-.card {
-  display: flex;
-  gap: 12px;
-  padding: 10px;
-  background: var(--c-surface);
-  border: 1px solid var(--c-line);
-  border-radius: 14px;
-  transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
-}
-.card:active {
-  transform: scale(0.985);
-  box-shadow: 0 6px 20px -12px rgba(20, 20, 30, 0.25);
-}
-.card-media {
+/* 两区之间的分割线:渐隐细线,左端一枚强调色圆点做视觉锚 */
+.zone-divider {
   position: relative;
-  flex: 0 0 128px;
-  width: 128px;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  border-radius: 10px;
-  background: var(--c-video-bg);
+  margin: 26px 16px 0;
+  height: 1px;
+  background: linear-gradient(to right, var(--c-line), var(--c-line) 70%, transparent);
 }
-.card-media img { width: 100%; height: 100%; object-fit: cover; }
-.card-duration {
+.zone-divider::before {
+  content: "";
   position: absolute;
-  right: 5px;
-  bottom: 5px;
-  padding: 2px 6px;
-  font-size: 10px;
-  font-weight: 600;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 6px;
+  left: 0;
+  top: -2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--c-accent);
 }
-.card-body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-.card-title { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
-.card-desc { margin: 0; font-size: 12.5px; color: var(--c-ink-soft); }
 
 /* ---------- 底部 ---------- */
 .app-foot {
