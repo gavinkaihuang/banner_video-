@@ -348,14 +348,14 @@ route('GET', '/api/banners', async (req, res, params, query) => {
   if (query.orientation === 'landscape' || query.orientation === 'portrait') {
     list = list.filter((b) => effectiveOrientation(b) === query.orientation);
   }
-  // 附加视频文件大小(本地文件实时 stat;URL 导入的播放源在远端,为 null)
+  // 附加视频文件大小;远程条目缺 size 时后台 HEAD 补录(不阻塞本次响应)
   // Promise.all 按输入顺序返回,排序不受 stat 完成时机影响
   const banners = await Promise.all(list.map(async (b) => {
     const item = { ...publicBanner(b), effOrientation: effectiveOrientation(b) };
-    const local = safeAssetPath(String(b.video || '').split('?')[0]);
-    const stat = local ? await fs.promises.stat(local).catch(() => null) : null;
-    item.size = stat ? stat.size : null;
-    item.sizeText = stat ? fmtBytes(stat.size) : null;
+    const size = await resolveVideoSize(b);
+    item.size = size;
+    item.sizeText = size == null ? null : fmtBytes(size);
+    if (size == null) backfillRemoteSize(b);
     return item;
   }));
   sendJson(res, 200, { banners });
@@ -374,13 +374,9 @@ route('GET', '/api/videos', async (req, res) => {
     const orient = effectiveOrientation(b);
     if (orient !== 'landscape' && orient !== 'portrait') return null;
 
-    // 大小:本地文件读磁盘;URL 导入的播放源在远端,返回 null
-    let size = null;
-    const localVideo = safeAssetPath(b.video.split('?')[0]);
-    if (localVideo) {
-      const stat = await fs.promises.stat(localVideo).catch(() => null);
-      if (stat) size = stat.size;
-    }
+    // 大小:优先处理时记录的值(远程=样本大小),本地文件兜底实时 stat
+    const size = await resolveVideoSize(b);
+    if (size == null) backfillRemoteSize(b);
 
     return {
       orient,
@@ -475,6 +471,7 @@ function createBannerRecord(fields, originalName, framesDir, forcedId) {
     duration: 0,
     width: 0,
     height: 0,
+    size: null,                 // 视频文件字节数:本地=转码产物大小;远程=下载样本大小(HEAD 补录)
     orientation: 'auto',   // auto=按分辨率判定;可被 PUT 改为 landscape/portrait
     order: maxOrder + 1,
     enabled: true,
@@ -589,6 +586,57 @@ function downloadToFile(url, dest, maxBytes) {
   });
 }
 
+/** HEAD 远程视频取 Content-Length(跟随少量重定向);不支持 HEAD 或失败返回 null */
+function fetchRemoteSize(url, redirects) {
+  return new Promise((resolve) => {
+    if (redirects > 5) return resolve(null);
+    const mod = url.startsWith('https:') ? require('https') : require('http');
+    const req = mod.request(url, { method: 'HEAD', timeout: 10000 }, (res) => {
+      res.resume();
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        return resolve(fetchRemoteSize(new URL(res.headers.location, url).toString(), redirects + 1));
+      }
+      resolve(res.statusCode === 200 ? (Number(res.headers['content-length']) || null) : null);
+    });
+    req.on('timeout', () => { req.destroy(); resolve(null); });
+    req.on('error', () => resolve(null));
+    req.end();
+  });
+}
+
+/** 存量远程条目缺 size 时后台补一次 HEAD 并落盘;fire-and-forget,不阻塞响应 */
+const remoteSizeInflight = new Set();
+function backfillRemoteSize(b) {
+  if (typeof b.size === 'number' && b.size > 0) return;
+  if (!b.video || !/^https?:/i.test(b.video)) return;
+  if (remoteSizeInflight.has(b.id)) return;
+  remoteSizeInflight.add(b.id);
+  fetchRemoteSize(b.video)
+    .then((size) => {
+      if (size == null) return;
+      const d = loadData();
+      const t = findBanner(d, b.id);
+      // 竞态兜底:处理流程先写入过 size 就不再覆盖
+      if (t && !(typeof t.size === 'number' && t.size > 0)) {
+        t.size = size;
+        saveData(d);
+      }
+    })
+    .catch(() => {})
+    .finally(() => remoteSizeInflight.delete(b.id));
+}
+
+/** 条目生效大小:优先用处理时记录的 size,本地文件兜底实时 stat */
+async function resolveVideoSize(b) {
+  if (typeof b.size === 'number' && b.size > 0) return b.size;
+  const local = safeAssetPath(String(b.video || '').split('?')[0]);
+  if (local) {
+    const st = await fs.promises.stat(local).catch(() => null);
+    if (st) return st.size;
+  }
+  return null;
+}
+
 /** 计算生效方向:手动指定(landscape/portrait)优先,否则按分辨率判定;
     分辨率未知(处理中/探测失败)返回 'unknown',前端不应把它归入任何一组 */
 function effectiveOrientation(banner) {
@@ -646,6 +694,9 @@ async function processBanner(id, srcFile, remoteUrl) {
 
     if (remoteUrl) {
       b.video = remoteUrl;
+      // 远程样本此刻已完整下载到本地,顺手记下真实大小,免去以后的 HEAD 请求
+      const st = await fs.promises.stat(srcFile).catch(() => null);
+      if (st) b.size = st.size;
     } else {
       // 画布按视频方向:竖屏 360×640,横屏 640×360
       const orient = meta.width >= meta.height ? 'landscape' : 'portrait';
@@ -653,6 +704,8 @@ async function processBanner(id, srcFile, remoteUrl) {
       const videoAbs = path.join(VIDEO_DIR, videoName);
       await transcodeBanner(srcFile, videoAbs, orient);
       b.video = '/assets/videos/' + videoName;
+      const st = await fs.promises.stat(videoAbs).catch(() => null);
+      if (st) b.size = st.size;
     }
 
     b.duration = Math.round(meta.duration);
