@@ -356,14 +356,15 @@ route('GET', '/api/banners', (req, res, params, query) => {
 /* ---- 视频总表:横屏/竖屏两组,含名称、大小、URL、封面等,供外部直接取用 ---- */
 route('GET', '/api/videos', async (req, res) => {
   const data = loadData();
-  const groups = { landscape: [], portrait: [] };
   const ordered = data.banners.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
 
-  await Promise.all(ordered.map(async (b) => {
-    // 只收处理完成且可播放的;方向未知(极端情况)不归组
-    if (b.status !== 'ready' || !b.video) return;
+  // Promise.all 的结果数组按输入顺序排列;分组 push 必须放在 await 之后统一做,
+  // 否则 stat 完成时机不同会把 order 顺序打乱
+  const entries = await Promise.all(ordered.map(async (b) => {
+    // 只收已启用、处理完成且可播放的;方向未知(极端情况)不归组
+    if (!b.enabled || b.status !== 'ready' || !b.video) return null;
     const orient = effectiveOrientation(b);
-    if (orient !== 'landscape' && orient !== 'portrait') return;
+    if (orient !== 'landscape' && orient !== 'portrait') return null;
 
     // 大小:本地文件读磁盘;URL 导入的播放源在远端,返回 null
     let size = null;
@@ -373,21 +374,28 @@ route('GET', '/api/videos', async (req, res) => {
       if (stat) size = stat.size;
     }
 
-    groups[orient].push({
-      id: b.id,
-      name: b.title || b.originalName || '',
-      fileName: b.originalName || '',
-      size,                                  // 字节数;URL 导入的为 null
-      sizeText: size == null ? null : fmtBytes(size),
-      videoUrl: b.video,
-      posterUrl: b.poster || null,
-      duration: b.duration || 0,             // 秒
-      width: b.width || 0,
-      height: b.height || 0,
-      enabled: !!b.enabled,
-      createdAt: b.createdAt || null
-    });
+    return {
+      orient,
+      item: {
+        id: b.id,
+        name: b.title || b.originalName || '',
+        fileName: b.originalName || '',
+        size,                                  // 字节数;URL 导入的为 null
+        sizeText: size == null ? null : fmtBytes(size),
+        videoUrl: b.video,
+        posterUrl: b.poster || null,
+        duration: b.duration || 0,             // 秒
+        width: b.width || 0,
+        height: b.height || 0,
+        createdAt: b.createdAt || null
+      }
+    };
   }));
+
+  const groups = { landscape: [], portrait: [] };
+  entries.forEach((entry) => {
+    if (entry) groups[entry.orient].push(entry.item);
+  });
 
   sendJson(res, 200, {
     landscape: groups.landscape,
