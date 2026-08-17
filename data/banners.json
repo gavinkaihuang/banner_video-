@@ -148,7 +148,7 @@
       "width": 544,
       "height": 960,
       "orientation": "auto",
-      "order": 6,
+      "order": 10,
       "enabled": false,
       "status": "ready",
       "posterStatus": "ready",
@@ -169,7 +169,8 @@
           "file": "candidate-2.jpg",
           "time": 46.85
         }
-      ]
+      ],
+      "size": 6385527
     },
     {
       "id": "086caf03-faae-4665-95b6-eb7e7caccee1",
@@ -182,7 +183,7 @@
       "width": 720,
       "height": 1280,
       "orientation": "auto",
-      "order": 7,
+      "order": 6,
       "enabled": true,
       "status": "ready",
       "posterStatus": "pending",
@@ -217,7 +218,7 @@
       "width": 720,
       "height": 1280,
       "orientation": "auto",
-      "order": 8,
+      "order": 7,
       "enabled": true,
       "status": "ready",
       "posterStatus": "ready",
@@ -252,7 +253,7 @@
       "width": 720,
       "height": 960,
       "orientation": "auto",
-      "order": 9,
+      "order": 8,
       "enabled": true,
       "status": "ready",
       "posterStatus": "ready",
@@ -287,7 +288,7 @@
       "width": 608,
       "height": 1152,
       "orientation": "auto",
-      "order": 10,
+      "order": 9,
       "enabled": true,
       "status": "ready",
       "posterStatus": "ready",
@@ -322,7 +323,7 @@
       "width": 1280,
       "height": 592,
       "orientation": "auto",
-      "order": 11,
+      "order": 4,
       "enabled": true,
       "status": "ready",
       "posterStatus": "pending",
