@@ -45,7 +45,7 @@
       "width": 888,
       "height": 506,
       "order": 1,
-      "enabled": false,
+      "enabled": true,
       "status": "ready",
       "posterStatus": "ready",
       "error": null,
@@ -67,40 +67,6 @@
         }
       ],
       "orientation": "auto"
-    },
-    {
-      "id": "ece4d676-6ba8-42fd-80c3-513de10e0835",
-      "title": "3-English_with_captions",
-      "tag": "小米汽车",
-      "link": "",
-      "video": "/assets/videos/ece4d676-6ba8-42fd-80c3-513de10e0835.mp4",
-      "poster": "/assets/posters/ece4d676-6ba8-42fd-80c3-513de10e0835.jpg?v=1786696966308",
-      "duration": 63,
-      "width": 720,
-      "height": 1280,
-      "order": 4,
-      "enabled": true,
-      "status": "ready",
-      "posterStatus": "ready",
-      "error": null,
-      "originalName": "3-English_with_captions.mp4",
-      "createdAt": "2026-08-14T08:34:56.441Z",
-      "_framesDir": "/Users/gminihome/SourceCodes/banner_video/data/frames/ece4d676-6ba8-42fd-80c3-513de10e0835",
-      "frames": [
-        {
-          "file": "candidate-0.jpg",
-          "time": 12.54
-        },
-        {
-          "file": "candidate-1.jpg",
-          "time": 31.36
-        },
-        {
-          "file": "candidate-2.jpg",
-          "time": 50.18
-        }
-      ],
-      "orientation": "portrait"
     },
     {
       "id": "673f055f-672f-40e8-af49-ea48a73aa102",
@@ -135,6 +101,176 @@
         }
       ],
       "orientation": "auto"
+    },
+    {
+      "id": "5b2d2cf3-e97f-451a-9415-8d6bdc3c34ba",
+      "title": "竖屏 1",
+      "tag": "",
+      "link": "",
+      "video": "https://stg.iobs.pingan.com.cn/download/fls-aflm-app-dmz-dev/katyusha_1786700633073.mp4",
+      "poster": "/assets/posters/5b2d2cf3-e97f-451a-9415-8d6bdc3c34ba.jpg?v=1786934965173",
+      "duration": 59,
+      "width": 544,
+      "height": 960,
+      "orientation": "auto",
+      "order": 5,
+      "enabled": true,
+      "status": "ready",
+      "posterStatus": "ready",
+      "error": null,
+      "originalName": "katyusha_1786700633073.mp4",
+      "createdAt": "2026-08-17T02:47:55.322Z",
+      "_framesDir": "/Users/gminihome/SourceCodes/banner_video/data/frames/5b2d2cf3-e97f-451a-9415-8d6bdc3c34ba",
+      "frames": [
+        {
+          "file": "candidate-0.jpg",
+          "time": 11.71
+        },
+        {
+          "file": "candidate-1.jpg",
+          "time": 29.28
+        },
+        {
+          "file": "candidate-2.jpg",
+          "time": 46.85
+        }
+      ]
+    },
+    {
+      "id": "ee267c45-c57f-455d-956e-8e7b272ab3b7",
+      "title": "竖屏 2",
+      "tag": "",
+      "link": "",
+      "video": "https://stg.iobs.pingan.com.cn/download/fls-aflm-app-dmz-dev/katyusha_1786700633073.mp4",
+      "poster": "/assets/posters/ee267c45-c57f-455d-956e-8e7b272ab3b7.jpg?v=1786934996671",
+      "duration": 59,
+      "width": 544,
+      "height": 960,
+      "orientation": "auto",
+      "order": 6,
+      "enabled": false,
+      "status": "ready",
+      "posterStatus": "ready",
+      "error": null,
+      "originalName": "katyusha_1786700633073.mp4",
+      "createdAt": "2026-08-17T02:48:22.597Z",
+      "_framesDir": "/Users/gminihome/SourceCodes/banner_video/data/frames/ee267c45-c57f-455d-956e-8e7b272ab3b7",
+      "frames": [
+        {
+          "file": "candidate-0.jpg",
+          "time": 11.71
+        },
+        {
+          "file": "candidate-1.jpg",
+          "time": 29.28
+        },
+        {
+          "file": "candidate-2.jpg",
+          "time": 46.85
+        }
+      ]
+    },
+    {
+      "id": "086caf03-faae-4665-95b6-eb7e7caccee1",
+      "title": "竖屏 10M",
+      "tag": "",
+      "link": "",
+      "video": "https://stg.iobs.pingan.com.cn/download/fls-aflm-app-dmz-dev/katyusha_1786935460857.mp4",
+      "poster": null,
+      "duration": 27,
+      "width": 720,
+      "height": 1280,
+      "orientation": "auto",
+      "order": 7,
+      "enabled": true,
+      "status": "ready",
+      "posterStatus": "pending",
+      "error": null,
+      "originalName": "katyusha_1786935460857.mp4",
+      "createdAt": "2026-08-17T03:06:27.922Z",
+      "_framesDir": "/Users/gminihome/SourceCodes/banner_video/data/frames/086caf03-faae-4665-95b6-eb7e7caccee1",
+      "frames": [
+        {
+          "file": "candidate-0.jpg",
+          "time": 5.38
+        },
+        {
+          "file": "candidate-1.jpg",
+          "time": 13.44
+        },
+        {
+          "file": "candidate-2.jpg",
+          "time": 21.51
+        }
+      ]
+    },
+    {
+      "id": "ce8a5297-552f-4690-9cb9-3bc9dbb09b32",
+      "title": "竖屏 5M",
+      "tag": "",
+      "link": "",
+      "video": "https://stg.iobs.pingan.com.cn/download/fls-aflm-app-dmz-dev/katyusha_1786935596434.mp4",
+      "poster": null,
+      "duration": 12,
+      "width": 720,
+      "height": 1280,
+      "orientation": "auto",
+      "order": 8,
+      "enabled": true,
+      "status": "ready",
+      "posterStatus": "pending",
+      "error": null,
+      "originalName": "katyusha_1786935596434.mp4",
+      "createdAt": "2026-08-17T03:06:45.567Z",
+      "_framesDir": "/Users/gminihome/SourceCodes/banner_video/data/frames/ce8a5297-552f-4690-9cb9-3bc9dbb09b32",
+      "frames": [
+        {
+          "file": "candidate-0.jpg",
+          "time": 2.47
+        },
+        {
+          "file": "candidate-1.jpg",
+          "time": 6.18
+        },
+        {
+          "file": "candidate-2.jpg",
+          "time": 9.88
+        }
+      ]
+    },
+    {
+      "id": "6e33e664-9695-436e-b311-b761068274b9",
+      "title": "竖屏 2M",
+      "tag": "",
+      "link": "",
+      "video": "https://stg.iobs.pingan.com.cn/download/fls-aflm-app-dmz-dev/katyusha_1786935649742.mp4",
+      "poster": null,
+      "duration": 9,
+      "width": 720,
+      "height": 960,
+      "orientation": "auto",
+      "order": 9,
+      "enabled": true,
+      "status": "ready",
+      "posterStatus": "pending",
+      "error": null,
+      "originalName": "katyusha_1786935649742.mp4",
+      "createdAt": "2026-08-17T03:06:58.253Z",
+      "_framesDir": "/Users/gminihome/SourceCodes/banner_video/data/frames/6e33e664-9695-436e-b311-b761068274b9",
+      "frames": [
+        {
+          "file": "candidate-0.jpg",
+          "time": 1.73
+        },
+        {
+          "file": "candidate-1.jpg",
+          "time": 4.32
+        },
+        {
+          "file": "candidate-2.jpg",
+          "time": 6.91
+        }
+      ]
     }
   ]
 }
