@@ -210,7 +210,7 @@
       "tag": "",
       "link": "",
       "video": "https://stg.iobs.pingan.com.cn/download/fls-aflm-app-dmz-dev/katyusha_1786935596434.mp4",
-      "poster": null,
+      "poster": "/assets/posters/ce8a5297-552f-4690-9cb9-3bc9dbb09b32.jpg?v=1786945903746",
       "duration": 12,
       "width": 720,
       "height": 1280,
@@ -218,7 +218,7 @@
       "order": 8,
       "enabled": true,
       "status": "ready",
-      "posterStatus": "pending",
+      "posterStatus": "ready",
       "error": null,
       "originalName": "katyusha_1786935596434.mp4",
       "createdAt": "2026-08-17T03:06:45.567Z",
@@ -244,7 +244,7 @@
       "tag": "",
       "link": "",
       "video": "https://stg.iobs.pingan.com.cn/download/fls-aflm-app-dmz-dev/katyusha_1786935649742.mp4",
-      "poster": null,
+      "poster": "/assets/posters/6e33e664-9695-436e-b311-b761068274b9.jpg?v=1786945894877",
       "duration": 9,
       "width": 720,
       "height": 960,
@@ -252,7 +252,7 @@
       "order": 9,
       "enabled": true,
       "status": "ready",
-      "posterStatus": "pending",
+      "posterStatus": "ready",
       "error": null,
       "originalName": "katyusha_1786935649742.mp4",
       "createdAt": "2026-08-17T03:06:58.253Z",
@@ -269,6 +269,40 @@
         {
           "file": "candidate-2.jpg",
           "time": 6.91
+        }
+      ]
+    },
+    {
+      "id": "cf35a8d1-f286-4fc5-b1f3-598662035c3f",
+      "title": "竖屏 18M",
+      "tag": "",
+      "link": "",
+      "video": "https://stg.iobs.pingan.com.cn/download/fls-aflm-app-dmz-dev/katyusha_1786937754965.mp4",
+      "poster": "/assets/posters/cf35a8d1-f286-4fc5-b1f3-598662035c3f.jpg?v=1786945886855",
+      "duration": 64,
+      "width": 608,
+      "height": 1152,
+      "orientation": "auto",
+      "order": 10,
+      "enabled": true,
+      "status": "ready",
+      "posterStatus": "ready",
+      "error": null,
+      "originalName": "katyusha_1786937754965.mp4",
+      "createdAt": "2026-08-17T05:51:08.747Z",
+      "_framesDir": "/Users/gminihome/SourceCodes/banner_video/data/frames/cf35a8d1-f286-4fc5-b1f3-598662035c3f",
+      "frames": [
+        {
+          "file": "candidate-0.jpg",
+          "time": 12.74
+        },
+        {
+          "file": "candidate-1.jpg",
+          "time": 31.86
+        },
+        {
+          "file": "candidate-2.jpg",
+          "time": 50.98
         }
       ]
     }
