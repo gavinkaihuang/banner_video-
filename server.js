@@ -106,6 +106,13 @@ function safeAssetPath(urlPath) {
   return abs && fs.existsSync(abs) ? abs : null;
 }
 
+/** 字节数转可读文本(1024 进制),用于 /api/videos 的 sizeText */
+function fmtBytes(n) {
+  if (n >= 1048576) return (n / 1048576).toFixed(1) + ' MB';
+  if (n >= 1024) return Math.round(n / 1024) + ' KB';
+  return n + ' B';
+}
+
 function sendJson(res, status, obj) {
   const body = JSON.stringify(obj);
   res.writeHead(status, {
@@ -343,6 +350,49 @@ route('GET', '/api/banners', (req, res, params, query) => {
   }
   sendJson(res, 200, {
     banners: list.map((b) => ({ ...publicBanner(b), effOrientation: effectiveOrientation(b) }))
+  });
+});
+
+/* ---- 视频总表:横屏/竖屏两组,含名称、大小、URL、封面等,供外部直接取用 ---- */
+route('GET', '/api/videos', async (req, res) => {
+  const data = loadData();
+  const groups = { landscape: [], portrait: [] };
+  const ordered = data.banners.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  await Promise.all(ordered.map(async (b) => {
+    // 只收处理完成且可播放的;方向未知(极端情况)不归组
+    if (b.status !== 'ready' || !b.video) return;
+    const orient = effectiveOrientation(b);
+    if (orient !== 'landscape' && orient !== 'portrait') return;
+
+    // 大小:本地文件读磁盘;URL 导入的播放源在远端,返回 null
+    let size = null;
+    const localVideo = safeAssetPath(b.video.split('?')[0]);
+    if (localVideo) {
+      const stat = await fs.promises.stat(localVideo).catch(() => null);
+      if (stat) size = stat.size;
+    }
+
+    groups[orient].push({
+      id: b.id,
+      name: b.title || b.originalName || '',
+      fileName: b.originalName || '',
+      size,                                  // 字节数;URL 导入的为 null
+      sizeText: size == null ? null : fmtBytes(size),
+      videoUrl: b.video,
+      posterUrl: b.poster || null,
+      duration: b.duration || 0,             // 秒
+      width: b.width || 0,
+      height: b.height || 0,
+      enabled: !!b.enabled,
+      createdAt: b.createdAt || null
+    });
+  }));
+
+  sendJson(res, 200, {
+    landscape: groups.landscape,
+    portrait: groups.portrait,
+    total: groups.landscape.length + groups.portrait.length
   });
 });
 

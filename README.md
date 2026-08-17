@@ -99,6 +99,7 @@ node server.js
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/api/banners` | Banner 列表(按 order 排序,每条带 `effOrientation` 生效方向);`?orientation=landscape\|portrait` 只取对应分组 |
+| GET | `/api/videos` | **视频总表**:横屏 / 竖屏两组,含名称、大小、URL、封面等,供外部系统直接取用(详见下方) |
 | POST | `/api/banners` | 上传视频(multipart:`file` + `title`/`tag`),返回处理中的记录 |
 | POST | `/api/banners-from-url` | 通过视频 URL 创建:`{url, title?, tag?}`,服务器下载一份样本(≤100MB)用于探测和抽帧,**播放直接引用原始 URL**,不占本服务器带宽 |
 | GET | `/api/banners/:id` | 单条详情 |
@@ -110,6 +111,41 @@ node server.js
 | POST | `/api/transcode-preview` | 转码试验(multipart:`file` + `preset`),直接返回 MP4 |
 
 前台只渲染 `enabled && status === 'ready'` 的 Banner;视频走 HTTP Range(206)渐进下载。
+
+### `GET /api/videos` 视频总表
+
+面向外部取数的只读接口:把所有**处理完成**的视频按横屏 / 竖屏分成两组返回,每条含名称、大小、播放地址、封面、时长与分辨率。
+
+```json
+{
+  "landscape": [
+    {
+      "id": "83d04d22-…",
+      "name": "Sintel 短片",             // 展示名(后台标题),缺省回落到文件名
+      "fileName": "video-test.mp4",       // 上传时的原始文件名
+      "size": 126517,                     // 视频文件字节数
+      "sizeText": "124 KB",               // 可读大小,方便直接展示
+      "videoUrl": "/assets/videos/….mp4", // 播放地址(相对路径需拼接站点域名)
+      "posterUrl": "/assets/posters/….jpg?v=…", // 封面;未选过封面为 null
+      "duration": 3,                      // 时长(秒,整数)
+      "width": 640,
+      "height": 360,
+      "enabled": true,                    // 后台启停状态,调用方自行决定是否过滤
+      "createdAt": "2026-08-14T08:16:50.421Z"
+    }
+  ],
+  "portrait": [ /* 同结构,竖屏组 */ ],
+  "total": 8
+}
+```
+
+约定与边界:
+
+- **只收 `status === 'ready'` 且有播放地址的条目**;处理中 / 失败的不进列表。
+- **分组规则**与后台一致(`effOrientation`):手动指定归类优先,否则按分辨率判定(宽 ≥ 高 = 横屏)。
+- **`videoUrl` 两种形态**:本地上传转码的是站内相对路径(`/assets/videos/…`,需拼域名);「视频链接」导入的是远程绝对地址(直接可播,流量不走本站)。
+- **`size` 读取方式**:站内文件实时读磁盘;远程 URL 导入的条目播放源在远端,`size` / `sizeText` 为 `null`(接口不做远程探测,保证响应快)。
+- 列表在两组内均按后台排序(`order` 升序)返回。
 
 ### 限制(演示级,勿直接上公网)
 
