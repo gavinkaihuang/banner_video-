@@ -79,7 +79,7 @@
       "width": 896,
       "height": 512,
       "order": 2,
-      "enabled": true,
+      "enabled": false,
       "status": "ready",
       "posterStatus": "ready",
       "error": null,
@@ -134,7 +134,8 @@
           "file": "candidate-2.jpg",
           "time": 46.85
         }
-      ]
+      ],
+      "size": 6385527
     },
     {
       "id": "ee267c45-c57f-455d-956e-8e7b272ab3b7",
@@ -202,7 +203,8 @@
           "file": "candidate-2.jpg",
           "time": 21.51
         }
-      ]
+      ],
+      "size": 10599338
     },
     {
       "id": "ce8a5297-552f-4690-9cb9-3bc9dbb09b32",
@@ -236,7 +238,8 @@
           "file": "candidate-2.jpg",
           "time": 9.88
         }
-      ]
+      ],
+      "size": 4148372
     },
     {
       "id": "6e33e664-9695-436e-b311-b761068274b9",
@@ -270,7 +273,8 @@
           "file": "candidate-2.jpg",
           "time": 6.91
         }
-      ]
+      ],
+      "size": 1934704
     },
     {
       "id": "cf35a8d1-f286-4fc5-b1f3-598662035c3f",
@@ -304,7 +308,43 @@
           "file": "candidate-2.jpg",
           "time": 50.98
         }
-      ]
+      ],
+      "size": 18267263
+    },
+    {
+      "id": "659c71d3-b134-443c-ba52-7d0b757ba6a5",
+      "title": "横屏",
+      "tag": "",
+      "link": "",
+      "video": "https://stg.iobs.pingan.com.cn/download/fls-aflm-app-dmz-dev/katyusha_1786700779652.mp4",
+      "poster": null,
+      "duration": 53,
+      "width": 1280,
+      "height": 592,
+      "orientation": "auto",
+      "order": 11,
+      "enabled": true,
+      "status": "ready",
+      "posterStatus": "pending",
+      "error": null,
+      "originalName": "katyusha_1786700779652.mp4",
+      "createdAt": "2026-08-17T07:47:13.680Z",
+      "_framesDir": "/Users/gminihome/SourceCodes/banner_video/data/frames/659c71d3-b134-443c-ba52-7d0b757ba6a5",
+      "frames": [
+        {
+          "file": "candidate-0.jpg",
+          "time": 10.65
+        },
+        {
+          "file": "candidate-1.jpg",
+          "time": 26.62
+        },
+        {
+          "file": "candidate-2.jpg",
+          "time": 42.59
+        }
+      ],
+      "size": 14440670
     }
   ]
 }
